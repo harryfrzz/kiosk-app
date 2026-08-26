@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, StyleSheet, Pressable, Dimensions, Image, Text } from 'react-native';
-import * as SplashScreen from 'expo-splash-screen';
+import { View, StyleSheet, Pressable, useWindowDimensions, Image, Text, Platform } from 'react-native';
+import * as ExpoSplashScreen from 'expo-splash-screen';
 import { Asset } from 'expo-asset';
 import { BlurView } from 'expo-blur';
 import Animated, {
@@ -16,20 +16,27 @@ import Animated, {
 
 import * as FileSystem from 'expo-file-system/legacy';
 
+import * as Font from 'expo-font';
+import { Outfit_400Regular, Outfit_600SemiBold } from '@expo-google-fonts/outfit';
+import {
+  BricolageGrotesque_700Bold,
+  BricolageGrotesque_800ExtraBold,
+} from '@expo-google-fonts/bricolage-grotesque';
+
 import MandalaArt from './MandalaArt';
 
 // Keep the splash screen visible while fetching resources
-SplashScreen.preventAutoHideAsync();
+ExpoSplashScreen.preventAutoHideAsync();
 
-const { width } = Dimensions.get('window');
-const LOGO_WIDTH = width * 0.75;
-const LOGO_HEIGHT = LOGO_WIDTH * 0.29; // exact 5504x1599 image ratio
-
-interface AnimatedSplashScreenProps {
+interface SplashScreenProps {
   onAnimationComplete: () => void;
 }
 
-export default function AnimatedSplashScreen({ onAnimationComplete }: AnimatedSplashScreenProps) {
+export default function SplashScreen({ onAnimationComplete }: SplashScreenProps) {
+  const { width } = useWindowDimensions();
+  const LOGO_WIDTH = Math.min(width * 0.75, 500);
+  const LOGO_HEIGHT = LOGO_WIDTH * 0.29;
+
   const [isAppReady, setIsAppReady] = useState(false);
   const [mandalaXml, setMandalaXml] = useState<string | null>(null);
   const containerOpacity = useSharedValue(1);
@@ -44,16 +51,29 @@ export default function AnimatedSplashScreen({ onAnimationComplete }: AnimatedSp
   useEffect(() => {
     async function prepare() {
       try {
-        const mandalaAsset = Asset.fromModule(require('../assets/mandala_gold.svg'));
+        await Font.loadAsync({
+          Outfit_400Regular,
+          Outfit_600SemiBold,
+          BricolageGrotesque_700Bold,
+          BricolageGrotesque_800ExtraBold,
+        });
+
+        const mandalaAsset = Asset.fromModule(require('../assets/vectors/mandala_gold.svg'));
         await mandalaAsset.downloadAsync();
         
-        if (mandalaAsset.localUri) {
-          const xml = await FileSystem.readAsStringAsync(mandalaAsset.localUri);
+        let xml: string | null = null;
+        if (Platform.OS === 'web') {
+          const response = await fetch(mandalaAsset.uri);
+          xml = await response.text();
+        } else if (mandalaAsset.localUri) {
+          xml = await FileSystem.readAsStringAsync(mandalaAsset.localUri);
+        }
+        if (xml) {
           setMandalaXml(xml);
         }
 
         await Asset.loadAsync([
-          require('../assets/annakshetra.png'),
+          require('../assets/branding/annakshetra.png'),
         ]);
       } catch (e) {
         console.warn('Error loading assets', e);
@@ -77,7 +97,7 @@ export default function AnimatedSplashScreen({ onAnimationComplete }: AnimatedSp
   useEffect(() => {
     if (isAppReady) {
       // Hide native splash screen seamlessly
-      SplashScreen.hideAsync();
+      ExpoSplashScreen.hideAsync();
 
       // Entrance animation for logo
       logoScale.value = withTiming(1, { duration: 800, easing: Easing.out(Easing.exp) });
@@ -126,7 +146,7 @@ export default function AnimatedSplashScreen({ onAnimationComplete }: AnimatedSp
   }));
 
   if (!isAppReady) {
-    return null;
+    return <View style={styles.container} />;
   }
 
   return (
@@ -140,14 +160,14 @@ export default function AnimatedSplashScreen({ onAnimationComplete }: AnimatedSp
           <BlurView intensity={60} tint="light" style={styles.fullWidthStrip}>
             <View style={styles.stripWarmOverlay} />
             
-            <View style={styles.logoMask}>
+            <View style={[styles.logoMask, { width: LOGO_WIDTH, height: LOGO_HEIGHT }]}>
               <Image 
-                source={require('../assets/annakshetra.png')} 
+                source={require('../assets/branding/annakshetra.png')} 
                 style={styles.logo}
                 resizeMode="contain"
               />
               {/* Shimmer Effect */}
-              <Animated.View style={[styles.shimmer, animatedShimmerStyle]} />
+              <Animated.View style={[styles.shimmer, animatedShimmerStyle, { top: -LOGO_HEIGHT, bottom: -LOGO_HEIGHT }]} />
             </View>
           </BlurView>
         </Animated.View>
@@ -173,6 +193,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     backgroundColor: '#FAF6EE', // Warm Pearl Ivory
+    overflow: 'hidden',
+    zIndex: 9999,
   },
   pressableArea: {
     flex: 1,
@@ -186,12 +208,16 @@ const styles = StyleSheet.create({
   },
   stripContainer: {
     width: '100%',
-    shadowColor: 'rgba(0,0,0,0.08)',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
     elevation: 8,
-  },
+    ...(Platform.OS === 'web'
+      ? { boxShadow: '0px 8px 20px rgba(0, 0, 0, 0.15)' }
+      : {
+          shadowColor: 'rgba(0,0,0,0.08)',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.2,
+          shadowRadius: 20,
+        }),
+  } as any,
   fullWidthStrip: {
     width: '100%',
     paddingVertical: 10,
@@ -208,8 +234,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.45)', // Premium translucent glassmorphic backdrop
   },
   logoMask: {
-    width: LOGO_WIDTH,
-    height: LOGO_HEIGHT,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -220,8 +244,6 @@ const styles = StyleSheet.create({
   },
   shimmer: {
     position: 'absolute',
-    top: -LOGO_HEIGHT,
-    bottom: -LOGO_HEIGHT,
     width: 40,
     backgroundColor: 'rgba(255, 255, 255, 0.5)',
   },
@@ -253,6 +275,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#D4AF37',
   },
   continueText: {
+    fontFamily: 'Outfit_600SemiBold',
     color: '#8A6D1B',
     fontSize: 12,
     letterSpacing: 2.5,
