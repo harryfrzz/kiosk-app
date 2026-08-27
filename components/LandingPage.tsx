@@ -8,10 +8,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 interface LandingPageProps {
   onReset: () => void;
   onSpotCoupons: () => void;
+  onFacultyCoupons: () => void;
   isOffline?: boolean;
 }
 
-export default function LandingPage({ onReset, onSpotCoupons, isOffline = false }: LandingPageProps) {
+export default function LandingPage({ onReset, onSpotCoupons, onFacultyCoupons, isOffline = false }: LandingPageProps) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
@@ -53,6 +54,7 @@ export default function LandingPage({ onReset, onSpotCoupons, isOffline = false 
                 onPress={onSpotCoupons}
                 style={styles.gridCard}
                 contentStyle={isLargeScreen ? styles.heroCardContentLarge : styles.heroCardContent}
+                mandalaPosition="right"
               />
             </View>
 
@@ -64,19 +66,22 @@ export default function LandingPage({ onReset, onSpotCoupons, isOffline = false 
                 disabled={isOffline}
                 style={styles.gridCard}
                 contentStyle={isLargeScreen ? styles.gridCardContentLarge : styles.gridCardContent}
+                mandalaPosition="bottom"
               />
 
               <KioskCard
                 title="Faculty or Staff Coupon"
                 description={isOffline ? "Currently unavailable offline." : "Faculty discount & staff meal pass."}
-                onPress={() => { console.log('Faculty Staff Coupon pressed') }}
+                onPress={onFacultyCoupons}
                 style={styles.gridCard}
                 contentStyle={isLargeScreen ? styles.gridCardContentLarge : styles.gridCardContent}
+                mandalaPosition="bottom"
               />
             </View>
           </View>
 
           {/* Bottom Section */}
+
           <View style={styles.bottomSection}>
             <Pressable onPress={onReset} style={({ pressed }) => [styles.resetButton, pressed && styles.resetButtonPressed]}>
               <Ionicons name="refresh" size={20} color="#8A6D1B" />

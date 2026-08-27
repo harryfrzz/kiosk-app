@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform, Vibration, LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform, Vibration, LayoutChangeEvent, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
@@ -12,27 +12,53 @@ interface KioskCardProps {
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
   contentStyle?: StyleProp<ViewStyle>;
+  titleStyle?: StyleProp<TextStyle>;
   /** 'stacked' puts the chevron bottom-right; 'row' sits it beside the text. */
   layout?: 'stacked' | 'row';
+  mandalaPosition?: 'top-bottom' | 'right' | 'bottom' | 'none';
+  mandalaScale?: number;
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export default function KioskCard({ title, description, onPress, disabled = false, style, contentStyle, layout = 'stacked' }: KioskCardProps) {
+export default function KioskCard({
+  title,
+  description,
+  onPress,
+  disabled = false,
+  style,
+  contentStyle,
+  titleStyle,
+  layout = 'stacked',
+  mandalaPosition = 'top-bottom',
+  mandalaScale = 2.2,
+}: KioskCardProps) {
   const isRow = layout === 'row';
   const [cardWidth, setCardWidth] = useState<number>(220);
+  const [cardHeight, setCardHeight] = useState<number>(220);
 
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
 
   // Clamp the source width so full-width grid cards don't get an oversized arch
-  const mandalaSize = Math.round(Math.min(cardWidth, 270) * 1.4);
-  const mandalaHalf = Math.round(mandalaSize / 2);
+  const standardMandalaSize = Math.round(Math.min(cardWidth, 270) * 1.4);
+  const standardMandalaHalf = Math.round(standardMandalaSize / 2);
+
+  // Increased mandala size for right-side placement
+  const rightMandalaSize = Math.round(Math.max(cardWidth * 0.65, cardHeight * mandalaScale, 450));
+  const rightMandalaHalf = Math.round(rightMandalaSize / 2);
+
+  // Bigger size for bottom-only mandala placement
+  const bottomMandalaSize = Math.round(Math.max(cardWidth * 1.5, 360));
+  const bottomMandalaHalf = Math.round(bottomMandalaSize / 2);
 
   const handleLayout = (e: LayoutChangeEvent) => {
-    const measuredWidth = e.nativeEvent.layout.width;
+    const { width: measuredWidth, height: measuredHeight } = e.nativeEvent.layout;
     if (measuredWidth > 0 && Math.abs(measuredWidth - cardWidth) > 2) {
       setCardWidth(measuredWidth);
+    }
+    if (measuredHeight > 0 && Math.abs(measuredHeight - cardHeight) > 2) {
+      setCardHeight(measuredHeight);
     }
   };
 
@@ -67,40 +93,68 @@ export default function KioskCard({ title, description, onPress, disabled = fals
       style={[styles.container, style, animatedStyle]}
     >
       <BlurView intensity={45} tint="light" style={[styles.blurContainer, isRow && styles.blurContainerRow, contentStyle]}>
-        {/* Arches are skipped in row layout: the card is too short to show them,
-            and each MandalaArt parses a 1234-path SVG into native views. */}
-        {!isRow && (
-        <View
-          style={[
-            styles.mandalaTopContainer,
-            {
-              top: -mandalaHalf,
-              pointerEvents: 'none',
-            } as any,
-          ]}
-        >
-          <MandalaArt size={mandalaSize} animated={false} />
-        </View>
+        {/* Top/Bottom Mandala Arches */}
+        {!isRow && mandalaPosition === 'top-bottom' && (
+          <>
+            <View
+              style={[
+                styles.mandalaTopContainer,
+                {
+                  top: -standardMandalaHalf,
+                  pointerEvents: 'none',
+                } as any,
+              ]}
+            >
+              <MandalaArt size={standardMandalaSize} animated={false} />
+            </View>
+
+            <View
+              style={[
+                styles.mandalaBottomContainer,
+                {
+                  bottom: -standardMandalaHalf,
+                  pointerEvents: 'none',
+                } as any,
+              ]}
+            >
+              <MandalaArt size={standardMandalaSize} animated={false} />
+            </View>
+          </>
         )}
 
-        {/* Static Bottom Mandala Arch (Perfectly centered on all devices) */}
-        {!isRow && (
-        <View
-          style={[
-            styles.mandalaBottomContainer,
-            {
-              bottom: -mandalaHalf,
-              pointerEvents: 'none',
-            } as any,
-          ]}
-        >
-          <MandalaArt size={mandalaSize} animated={false} />
-        </View>
+        {/* Bottom Only Mandala (Bigger size) */}
+        {!isRow && mandalaPosition === 'bottom' && (
+          <View
+            style={[
+              styles.mandalaBottomContainer,
+              {
+                bottom: -bottomMandalaHalf,
+                pointerEvents: 'none',
+              } as any,
+            ]}
+          >
+            <MandalaArt size={bottomMandalaSize} animated={false} />
+          </View>
+        )}
+
+        {/* Right Side Mandala (1.5x scale, single side) */}
+        {!isRow && mandalaPosition === 'right' && (
+          <View
+            style={[
+              styles.mandalaRightContainer,
+              {
+                right: -rightMandalaHalf,
+                pointerEvents: 'none',
+              } as any,
+            ]}
+          >
+            <MandalaArt size={rightMandalaSize} animated={false} />
+          </View>
         )}
 
         {/* Content Section (Top-left inside card) */}
         <View style={[styles.contentSection, isRow && styles.contentSectionRow]}>
-          <Text style={styles.title}>{title}</Text>
+          <Text style={[styles.title, titleStyle]}>{title}</Text>
           <Text style={styles.description}>{description}</Text>
         </View>
 
@@ -160,6 +214,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     opacity: 0.28,
   },
+  mandalaRightContainer: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    opacity: 0.28,
+  },
   blurContainerRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -178,7 +240,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'BricolageGrotesque_700Bold',
-    fontSize: 20,
+    fontSize: 28,
     fontWeight: '800',
     color: '#2C2C2C',
     textAlign: 'left',

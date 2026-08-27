@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Text, Pressable, useWindowDimensions, ScrollView } from 'react-native';
+import { View, StyleSheet, Text, Pressable, useWindowDimensions, ScrollView, Image } from 'react-native';
 import MandalaArt from './MandalaArt';
 import KioskCard from './KioskCard';
 import { Ionicons } from '@expo/vector-icons';
@@ -38,7 +38,7 @@ export default function SpotCouponsPage({ onBack, onReset, isOffline = false }: 
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(20, insets.bottom) }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: Math.max(90, insets.bottom + 80) }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.content}>
@@ -81,6 +81,15 @@ export default function SpotCouponsPage({ onBack, onReset, isOffline = false }: 
           </View>
         </View>
       </ScrollView>
+
+      {/* Pinned Bottom Footer Logo */}
+      <View style={[styles.pinnedFooter, { paddingBottom: Math.max(10, insets.bottom) }]} pointerEvents="none">
+        <Image
+          source={require('../assets/branding/annakshetra.png')}
+          style={styles.footerLogo}
+          resizeMode="contain"
+        />
+      </View>
     </View>
   );
 }
@@ -178,5 +187,21 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontWeight: '700',
     fontSize: 16,
+  },
+  pinnedFooter: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 10,
+    backgroundColor: 'rgba(250, 246, 238, 0.85)',
+    zIndex: 20,
+  },
+  footerLogo: {
+    width: 200,
+    height: 62,
+    opacity: 0.85,
   },
 });
