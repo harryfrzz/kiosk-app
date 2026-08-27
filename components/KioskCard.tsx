@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable, Platform, Vibration, LayoutChangeEvent } from 'react-native';
+import { View, Text, StyleSheet, Pressable, Platform, Vibration, LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withTiming } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
@@ -10,17 +10,23 @@ interface KioskCardProps {
   description: string;
   onPress: () => void;
   disabled?: boolean;
+  style?: StyleProp<ViewStyle>;
+  contentStyle?: StyleProp<ViewStyle>;
+  /** 'stacked' puts the chevron bottom-right; 'row' sits it beside the text. */
+  layout?: 'stacked' | 'row';
 }
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-export default function KioskCard({ title, description, onPress, disabled = false }: KioskCardProps) {
+export default function KioskCard({ title, description, onPress, disabled = false, style, contentStyle, layout = 'stacked' }: KioskCardProps) {
+  const isRow = layout === 'row';
   const [cardWidth, setCardWidth] = useState<number>(220);
 
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
 
-  const mandalaSize = Math.round(cardWidth * 1.4);
+  // Clamp the source width so full-width grid cards don't get an oversized arch
+  const mandalaSize = Math.round(Math.min(cardWidth, 270) * 1.4);
   const mandalaHalf = Math.round(mandalaSize / 2);
 
   const handleLayout = (e: LayoutChangeEvent) => {
@@ -58,10 +64,12 @@ export default function KioskCard({ title, description, onPress, disabled = fals
       onPress={!disabled ? onPress : undefined}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={[styles.container, animatedStyle]}
+      style={[styles.container, style, animatedStyle]}
     >
-      <BlurView intensity={45} tint="light" style={styles.blurContainer}>
-        {/* Static Top Mandala Arch (Perfectly centered on all devices) */}
+      <BlurView intensity={45} tint="light" style={[styles.blurContainer, isRow && styles.blurContainerRow, contentStyle]}>
+        {/* Arches are skipped in row layout: the card is too short to show them,
+            and each MandalaArt parses a 1234-path SVG into native views. */}
+        {!isRow && (
         <View
           style={[
             styles.mandalaTopContainer,
@@ -73,8 +81,10 @@ export default function KioskCard({ title, description, onPress, disabled = fals
         >
           <MandalaArt size={mandalaSize} animated={false} />
         </View>
+        )}
 
         {/* Static Bottom Mandala Arch (Perfectly centered on all devices) */}
+        {!isRow && (
         <View
           style={[
             styles.mandalaBottomContainer,
@@ -86,16 +96,17 @@ export default function KioskCard({ title, description, onPress, disabled = fals
         >
           <MandalaArt size={mandalaSize} animated={false} />
         </View>
+        )}
 
-        {/* Content Section (Centered inside card between top & bottom arches) */}
-        <View style={styles.contentSection}>
+        {/* Content Section (Top-left inside card) */}
+        <View style={[styles.contentSection, isRow && styles.contentSectionRow]}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.description}>{description}</Text>
+        </View>
 
-          {/* Action Chevron Button */}
-          <View style={styles.arrowContainer}>
-            <Ionicons name="chevron-forward" size={24} color="#D4AF37" />
-          </View>
+        {/* Action Chevron Button (Bottom-right, or beside the text in row layout) */}
+        <View style={[styles.arrowContainer, isRow && styles.arrowContainerRow]}>
+          <Ionicons name="chevron-forward" size={24} color="#D4AF37" />
         </View>
       </BlurView>
     </AnimatedPressable>
@@ -126,8 +137,8 @@ const styles = StyleSheet.create({
   blurContainer: {
     flex: 1,
     flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'stretch',
+    justifyContent: 'space-between',
     paddingVertical: 36,
     paddingHorizontal: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
@@ -149,19 +160,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     opacity: 0.28,
   },
-  contentSection: {
+  blurContainerRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 18,
+    paddingVertical: 20,
+    minHeight: 0,
+  },
+  contentSection: {
+    alignItems: 'flex-start',
     zIndex: 5,
     width: '100%',
+  },
+  contentSectionRow: {
+    flex: 1,
+    width: 'auto',
+    paddingRight: 16,
   },
   title: {
     fontFamily: 'BricolageGrotesque_700Bold',
     fontSize: 20,
     fontWeight: '800',
     color: '#2C2C2C',
-    textAlign: 'center',
+    textAlign: 'left',
     marginBottom: 8,
     letterSpacing: 0.2,
   },
@@ -169,12 +189,11 @@ const styles = StyleSheet.create({
     fontFamily: 'Outfit_400Regular',
     fontSize: 13,
     color: '#666',
-    textAlign: 'center',
+    textAlign: 'left',
     lineHeight: 19,
-    paddingHorizontal: 6,
-    marginBottom: 20,
   },
   arrowContainer: {
+    alignSelf: 'flex-end',
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -183,5 +202,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: 'rgba(212, 175, 55, 0.3)',
+    zIndex: 5,
+  },
+  arrowContainerRow: {
+    alignSelf: 'center',
   },
 });

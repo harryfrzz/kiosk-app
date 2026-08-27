@@ -5,9 +5,10 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Network from 'expo-network';
 import SplashScreen from './components/SplashScreen';
 import LandingPage from './components/LandingPage';
+import SpotCouponsPage from './components/SpotCouponsPage';
 import HeaderStatusBar from './components/HeaderStatusBar';
 
-type ScreenState = 'splash' | 'landing';
+type ScreenState = 'splash' | 'landing' | 'spotCoupons';
 
 const IDLE_TIMEOUT_SECONDS = 60;
 
@@ -71,10 +72,22 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <View style={styles.container} {...panResponder.panHandlers}>
-        {currentScreen !== 'splash' && (
-          <HeaderStatusBar secondsRemaining={secondsRemaining} isOffline={isOffline} />
+        {/* Always mounted so it doesn't reflow LandingPage when the splash clears.
+            The splash is an absolute, full-screen overlay that covers it meanwhile. */}
+        <HeaderStatusBar isOffline={isOffline} />
+        {currentScreen === 'spotCoupons' ? (
+          <SpotCouponsPage
+            onBack={() => setCurrentScreen('landing')}
+            onReset={resetToSplash}
+            isOffline={isOffline}
+          />
+        ) : (
+          <LandingPage
+            onReset={resetToSplash}
+            onSpotCoupons={() => setCurrentScreen('spotCoupons')}
+            isOffline={isOffline}
+          />
         )}
-        <LandingPage onReset={resetToSplash} isOffline={isOffline} />
         <StatusBar style="auto" />
 
         {currentScreen === 'splash' && (

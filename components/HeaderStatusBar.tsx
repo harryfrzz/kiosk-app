@@ -1,25 +1,65 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import * as Network from 'expo-network';
+import React from 'react';
+import { View, Text, StyleSheet, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface HeaderStatusBarProps {
-  secondsRemaining?: number;
   isOffline?: boolean;
 }
 
-export default function HeaderStatusBar({ secondsRemaining = 60, isOffline = false }: HeaderStatusBarProps) {
+interface LiveClockProps {
+  timeFontSize: number;
+  dateFontSize: number;
+}
+
+// Memoized clock sub-component to isolate 1s re-renders
+const LiveClock = React.memo(({ timeFontSize, dateFontSize }: LiveClockProps) => {
+  const [time, setTime] = React.useState(new Date());
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  };
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  };
+
+  return (
+    <View style={styles.dateTimeContainer}>
+      <Text style={[styles.timeText, { fontSize: timeFontSize }]}>{formatTime(time)}</Text>
+      <Text style={[styles.dateText, { fontSize: dateFontSize }]}>{formatDate(time)}</Text>
+    </View>
+  );
+});
+
+export default function HeaderStatusBar({ isOffline = false }: HeaderStatusBarProps) {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+
+  const isLargeScreen = width > 768;
+  const timeFontSize = isLargeScreen ? 24 : 18;
+  const dateFontSize = isLargeScreen ? 15 : 12;
 
   return (
     <View style={[styles.container, { paddingTop: Math.max(insets.top, 12) }]}>
       <View style={styles.leftSection}>
-        {/* Active Countdown Timer Badge */}
-        <View style={styles.timerBadge}>
-          <Ionicons name="timer-outline" size={18} color="#8A6D1B" />
-          <Text style={styles.timerText}>{secondsRemaining}s</Text>
-        </View>
+        <LiveClock timeFontSize={timeFontSize} dateFontSize={dateFontSize} />
       </View>
 
       <View style={styles.rightSection}>
@@ -53,22 +93,20 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'center',
   },
-  timerBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(212, 175, 55, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(212, 175, 55, 0.4)',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-    gap: 6,
+  dateTimeContainer: {
+    alignItems: 'flex-start',
   },
-  timerText: {
+  timeText: {
     fontFamily: 'Outfit_600SemiBold',
+    fontWeight: '800',
     color: '#8A6D1B',
-    fontWeight: '700',
-    fontSize: 15,
+    letterSpacing: 1,
+  },
+  dateText: {
+    fontFamily: 'Outfit_400Regular',
+    fontWeight: '600',
+    color: '#666',
+    marginTop: 2,
     letterSpacing: 0.5,
   },
 });

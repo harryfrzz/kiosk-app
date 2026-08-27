@@ -7,64 +7,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface LandingPageProps {
   onReset: () => void;
+  onSpotCoupons: () => void;
   isOffline?: boolean;
 }
 
-interface LiveClockProps {
-  timeFontSize: number;
-  dateFontSize: number;
-}
-
-// Memoized clock sub-component to isolate 1s re-renders
-const LiveClock = React.memo(({ timeFontSize, dateFontSize }: LiveClockProps) => {
-  const [time, setTime] = React.useState(new Date());
-
-  React.useEffect(() => {
-    const timer = setInterval(() => {
-      setTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    });
-  };
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true,
-    });
-  };
-
-  return (
-    <View style={styles.dateTimeContainer}>
-      <Text style={[styles.timeText, { fontSize: timeFontSize }]}>{formatTime(time)}</Text>
-      <Text style={[styles.dateText, { fontSize: dateFontSize }]}>{formatDate(time)}</Text>
-    </View>
-  );
-});
-
-export default function LandingPage({ onReset, isOffline = false }: LandingPageProps) {
+export default function LandingPage({ onReset, onSpotCoupons, isOffline = false }: LandingPageProps) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
   // Dynamic font & logo scaling
   const isLargeScreen = width > 768;
-  const greetingFontSize = isLargeScreen ? 36 : 26;
   const subtitleFontSize = isLargeScreen ? 22 : 18;
-  const timeFontSize = isLargeScreen ? 36 : 28;
-  const dateFontSize = isLargeScreen ? 20 : 16;
 
-  // Fluid logo scaling based on viewport size (min 280px on phones, up to 620px on iPad Pro / 4K Kiosks)
-  const logoWidth = Math.min(Math.max(width * 0.48, 280), 620);
+  // Fluid logo scaling based on viewport size (min 240px on phones, up to 520px on iPad Pro / 4K Kiosks)
+  const logoWidth = Math.min(Math.max(width * 0.4, 240), 520);
   const logoHeight = logoWidth * 0.31;
 
   return (
@@ -80,7 +36,6 @@ export default function LandingPage({ onReset, isOffline = false }: LandingPageP
         <View style={styles.content}>
           {/* Hero Section */}
           <View style={styles.heroSection}>
-            <Text style={[styles.greetingText, { fontSize: greetingFontSize }]}>Welcome to</Text>
             <Image
               source={require('../assets/branding/annakshetra.png')}
               style={[styles.logo, { width: logoWidth, height: logoHeight }]}
@@ -90,60 +45,36 @@ export default function LandingPage({ onReset, isOffline = false }: LandingPageP
           </View>
 
           {/* Cards Section */}
-          {isLargeScreen ? (
-            <View style={styles.cardsContainer}>
+          <View style={styles.cardsGrid}>
+            <View style={styles.gridRow}>
               <KioskCard
                 title="Spot Coupons"
                 description={isOffline ? "Currently unavailable offline." : "Instant food coupon generation."}
-                onPress={() => { console.log('Spot Coupons pressed') }}
+                onPress={onSpotCoupons}
+                style={styles.gridCard}
+                contentStyle={isLargeScreen ? styles.heroCardContentLarge : styles.heroCardContent}
               />
+            </View>
 
+            <View style={styles.gridRow}>
               <KioskCard
                 title="Account Recharge"
                 description={isOffline ? "Currently unavailable offline." : "Top-up smart balance using UPI."}
                 onPress={() => { console.log('Account Recharge pressed') }}
                 disabled={isOffline}
+                style={styles.gridCard}
+                contentStyle={isLargeScreen ? styles.gridCardContentLarge : styles.gridCardContent}
               />
 
               <KioskCard
                 title="Faculty or Staff Coupon"
                 description={isOffline ? "Currently unavailable offline." : "Faculty discount & staff meal pass."}
                 onPress={() => { console.log('Faculty Staff Coupon pressed') }}
+                style={styles.gridCard}
+                contentStyle={isLargeScreen ? styles.gridCardContentLarge : styles.gridCardContent}
               />
             </View>
-          ) : (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalCardsScroll}
-              style={{ width: '100%' }}
-            >
-              <View style={styles.mobileCardWrapper}>
-                <KioskCard
-                  title="Spot Coupons"
-                  description={isOffline ? "Currently unavailable offline." : "Instant food coupon generation."}
-                  onPress={() => { console.log('Spot Coupons pressed') }}
-                />
-              </View>
-
-              <View style={styles.mobileCardWrapper}>
-                <KioskCard
-                  title="Account Recharge"
-                  description={isOffline ? "Currently unavailable offline." : "Top-up smart balance using UPI."}
-                  onPress={() => { console.log('Account Recharge pressed') }}
-                  disabled={isOffline}
-                />
-              </View>
-
-              <View style={styles.mobileCardWrapper}>
-                <KioskCard
-                  title="Faculty or Staff Coupon"
-                  description={isOffline ? "Currently unavailable offline." : "Faculty discount & staff meal pass."}
-                  onPress={() => { console.log('Faculty Staff Coupon pressed') }}
-                />
-              </View>
-            </ScrollView>
-          )}
+          </View>
 
           {/* Bottom Section */}
           <View style={styles.bottomSection}>
@@ -151,9 +82,6 @@ export default function LandingPage({ onReset, isOffline = false }: LandingPageP
               <Ionicons name="refresh" size={20} color="#8A6D1B" />
               <Text style={styles.resetText}>Start Over</Text>
             </Pressable>
-
-            {/* Time & Date Display (Isolated 1s ticking sub-component) */}
-            <LiveClock timeFontSize={timeFontSize} dateFontSize={dateFontSize} />
           </View>
         </View>
       </ScrollView>
@@ -190,36 +118,42 @@ const styles = StyleSheet.create({
     marginTop: 0,
     marginBottom: 24,
   },
-  greetingText: {
-    fontFamily: 'BricolageGrotesque_700Bold',
-    fontWeight: '700',
-    color: '#8A6D1B',
-    textAlign: 'center',
-    marginBottom: 2,
-  },
   headerSubtitle: {
     fontFamily: 'BricolageGrotesque_700Bold',
     color: '#666',
     marginTop: 8,
     marginBottom: 16,
   },
-  cardsContainer: {
+  cardsGrid: {
     width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'stretch',
-    gap: 16,
-    flex: 1,
-    maxHeight: 580,
-  },
-  horizontalCardsScroll: {
+    maxWidth: 900,
+    alignSelf: 'center',
     paddingHorizontal: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
+    gap: 16,
   },
-  mobileCardWrapper: {
-    width: 260,
-    marginHorizontal: 6,
+  gridRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  // Cancels KioskCard's carousel-era 270px cap so cards fill their grid cell
+  gridCard: {
+    maxWidth: '100%',
+  },
+  heroCardContent: {
+    minHeight: 200,
+    paddingVertical: 24,
+  },
+  heroCardContentLarge: {
+    minHeight: 260,
+    paddingVertical: 32,
+  },
+  gridCardContent: {
+    minHeight: 260,
+    paddingVertical: 28,
+  },
+  gridCardContentLarge: {
+    minHeight: 320,
+    paddingVertical: 36,
   },
   bottomSection: {
     marginTop: 'auto',
@@ -249,25 +183,5 @@ const styles = StyleSheet.create({
     marginLeft: 8,
     fontWeight: '700',
     fontSize: 16,
-  },
-  dateTimeContainer: {
-    alignItems: 'center',
-    marginTop: 24,
-    marginBottom: 8,
-  },
-  timeText: {
-    fontFamily: 'Outfit_600SemiBold',
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#8A6D1B',
-    letterSpacing: 1.5,
-  },
-  dateText: {
-    fontFamily: 'Outfit_400Regular',
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#666',
-    marginTop: 4,
-    letterSpacing: 0.8,
   },
 });
