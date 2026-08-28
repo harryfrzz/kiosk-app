@@ -261,7 +261,7 @@ export default function FacultyMealsPage({ user, onBack, onReset, onProceedToPay
               </View>
 
               {/* Mandala art — half-visible on right edge (380px size) */}
-              <View style={styles.userCardMandala} pointerEvents="none">
+              <View style={[styles.userCardMandala, { pointerEvents: 'none' }]}>
                 <MandalaArt size={380} animated={false} />
               </View>
             </BlurView>
@@ -319,7 +319,7 @@ export default function FacultyMealsPage({ user, onBack, onReset, onProceedToPay
       </View>
 
       {/* Pinned Bottom Footer Logo */}
-      <View style={[styles.pinnedFooter, { paddingBottom: Math.max(10, insets.bottom) }]} pointerEvents="none">
+      <View style={[styles.pinnedFooter, { paddingBottom: Math.max(10, insets.bottom), pointerEvents: 'none' }]}>
         <Image
           source={require('../assets/branding/annakshetra.png')}
           style={styles.footerLogo}

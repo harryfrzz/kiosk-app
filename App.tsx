@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, View, PanResponder } from 'react-native';
+import { StyleSheet, View, PanResponder, Platform } from 'react-native';
 import { useState, useRef, useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as Network from 'expo-network';
@@ -9,10 +9,11 @@ import SpotCouponsPage from './components/SpotCouponsPage';
 import FacultyTapIdPage from './components/FacultyTapIdPage';
 import FacultyMealsPage from './components/FacultyMealsPage';
 import PrintCouponPage from './components/PrintCouponPage';
+import RechargeAmountPage from './components/RechargeAmountPage';
 import HeaderStatusBar from './components/HeaderStatusBar';
 import { MOCK_FACULTY_USER, MealDefinition } from './mockData';
 
-type ScreenState = 'splash' | 'landing' | 'spotCoupons' | 'facultyTapId' | 'facultyMeals' | 'printCoupon';
+type ScreenState = 'splash' | 'landing' | 'spotCoupons' | 'facultyTapId' | 'facultyMeals' | 'printCoupon' | 'rechargeTapId' | 'rechargeAmount';
 
 const IDLE_TIMEOUT_SECONDS = 60;
 
@@ -64,6 +65,19 @@ export default function App() {
     return () => clearInterval(interval);
   }, [currentScreen]);
 
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+    const handleActivity = () => {
+      resetIdleTimer();
+    };
+    window.addEventListener('pointerdown', handleActivity, { capture: true });
+    window.addEventListener('keydown', handleActivity, { capture: true });
+    return () => {
+      window.removeEventListener('pointerdown', handleActivity, { capture: true });
+      window.removeEventListener('keydown', handleActivity, { capture: true });
+    };
+  }, []);
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponderCapture: () => {
@@ -80,6 +94,11 @@ export default function App() {
   const handleProceedToPayment = (meal: MealDefinition, price: number) => {
     setActivePayment({ meal, price });
     setCurrentScreen('printCoupon');
+  };
+
+  const handleProceedToRecharge = (amount: number) => {
+    // TODO: hook into payment gateway; for now reset to splash after "success"
+    resetToSplash();
   };
 
   const renderScreen = () => {
@@ -118,12 +137,30 @@ export default function App() {
             onFinish={resetToSplash}
           />
         ) : null;
+      case 'rechargeTapId':
+        return (
+          <FacultyTapIdPage
+            onBack={() => setCurrentScreen('landing')}
+            onReset={resetToSplash}
+            onCardTapped={() => setCurrentScreen('rechargeAmount')}
+          />
+        );
+      case 'rechargeAmount':
+        return (
+          <RechargeAmountPage
+            user={MOCK_FACULTY_USER}
+            onBack={() => setCurrentScreen('rechargeTapId')}
+            onReset={resetToSplash}
+            onProceedToRecharge={handleProceedToRecharge}
+          />
+        );
       default:
         return (
           <LandingPage
             onReset={resetToSplash}
             onSpotCoupons={() => setCurrentScreen('spotCoupons')}
             onFacultyCoupons={() => setCurrentScreen('facultyTapId')}
+            onAccountRecharge={() => setCurrentScreen('rechargeTapId')}
             isOffline={isOffline}
           />
         );
@@ -132,7 +169,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <View style={styles.container} {...panResponder.panHandlers}>
+      <View style={styles.container} {...(Platform.OS !== 'web' ? panResponder.panHandlers : {})}>
         {/* Always mounted so it doesn't reflow LandingPage when the splash clears.
             The splash is an absolute, full-screen overlay that covers it meanwhile. */}
         <HeaderStatusBar isOffline={isOffline} />
