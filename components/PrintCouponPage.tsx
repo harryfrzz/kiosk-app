@@ -241,8 +241,7 @@ export default function PrintCouponPage({
 
       {/* Pinned logo */}
       <View
-        style={[styles.footer, { paddingBottom: Math.max(10, insets.bottom) }]}
-        pointerEvents="none"
+        style={[styles.footer, { paddingBottom: Math.max(10, insets.bottom), pointerEvents: 'none' }]}
       >
         <Image
           source={require('../assets/branding/annakshetra.png')}

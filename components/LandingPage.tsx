@@ -9,10 +9,11 @@ interface LandingPageProps {
   onReset: () => void;
   onSpotCoupons: () => void;
   onFacultyCoupons: () => void;
+  onAccountRecharge: () => void;
   isOffline?: boolean;
 }
 
-export default function LandingPage({ onReset, onSpotCoupons, onFacultyCoupons, isOffline = false }: LandingPageProps) {
+export default function LandingPage({ onReset, onSpotCoupons, onFacultyCoupons, onAccountRecharge, isOffline = false }: LandingPageProps) {
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
@@ -62,7 +63,7 @@ export default function LandingPage({ onReset, onSpotCoupons, onFacultyCoupons, 
               <KioskCard
                 title="Account Recharge"
                 description={isOffline ? "Currently unavailable offline." : "Top-up smart balance using UPI."}
-                onPress={() => { console.log('Account Recharge pressed') }}
+                onPress={onAccountRecharge}
                 disabled={isOffline}
                 style={styles.gridCard}
                 contentStyle={isLargeScreen ? styles.gridCardContentLarge : styles.gridCardContent}

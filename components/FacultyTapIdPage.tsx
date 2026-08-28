@@ -221,7 +221,7 @@ export default function FacultyTapIdPage({ onBack, onReset, onCardTapped }: Facu
       </View>
 
       {/* Pinned Bottom Footer Logo */}
-      <View style={[styles.pinnedFooter, { paddingBottom: Math.max(10, insets.bottom) }]} pointerEvents="none">
+      <View style={[styles.pinnedFooter, { paddingBottom: Math.max(10, insets.bottom), pointerEvents: 'none' }]}>
         <Image
           source={require('../assets/branding/annakshetra.png')}
           style={styles.footerLogo}
