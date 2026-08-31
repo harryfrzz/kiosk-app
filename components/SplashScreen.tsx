@@ -14,8 +14,6 @@ import Animated, {
   cancelAnimation,
 } from 'react-native-reanimated';
 
-import * as FileSystem from 'expo-file-system/legacy';
-
 import * as Font from 'expo-font';
 import { Outfit_400Regular, Outfit_600SemiBold } from '@expo-google-fonts/outfit';
 import {
@@ -38,7 +36,6 @@ export default function SplashScreen({ onAnimationComplete }: SplashScreenProps)
   const LOGO_HEIGHT = LOGO_WIDTH * 0.29;
 
   const [isAppReady, setIsAppReady] = useState(false);
-  const [mandalaXml, setMandalaXml] = useState<string | null>(null);
   const containerOpacity = useSharedValue(1);
   const shimmerTranslateX = useSharedValue(-LOGO_WIDTH * 1.5);
   const logoScale = useSharedValue(0.9);
@@ -58,22 +55,9 @@ export default function SplashScreen({ onAnimationComplete }: SplashScreenProps)
           BricolageGrotesque_800ExtraBold,
         });
 
-        const mandalaAsset = Asset.fromModule(require('../assets/vectors/mandala_gold.svg'));
-        await mandalaAsset.downloadAsync();
-        
-        let xml: string | null = null;
-        if (Platform.OS === 'web') {
-          const response = await fetch(mandalaAsset.uri);
-          xml = await response.text();
-        } else if (mandalaAsset.localUri) {
-          xml = await FileSystem.readAsStringAsync(mandalaAsset.localUri);
-        }
-        if (xml) {
-          setMandalaXml(xml);
-        }
-
         await Asset.loadAsync([
           require('../assets/branding/annakshetra.png'),
+          require('../assets/vectors/mandala_gold.png'),
         ]);
       } catch (e) {
         console.warn('Error loading assets', e);
@@ -153,7 +137,7 @@ export default function SplashScreen({ onAnimationComplete }: SplashScreenProps)
     <Animated.View style={[styles.container, animatedContainerStyle]}>
       <Pressable style={styles.pressableArea} onPress={finishAnimation}>
         <View style={styles.mandalaContainer}>
-          <MandalaArt size={width * 1.8} xml={mandalaXml} />
+          <MandalaArt size={width * 1.8} />
         </View>
 
         <Animated.View style={[styles.stripContainer, animatedLogoStyle]}>

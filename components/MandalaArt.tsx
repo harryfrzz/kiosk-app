@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Platform, Image } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, Image } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -8,37 +8,29 @@ import Animated, {
   Easing,
   cancelAnimation,
 } from 'react-native-reanimated';
-import { Asset } from 'expo-asset';
-import * as FileSystem from 'expo-file-system/legacy';
-
-// Only import SvgXml on native — web uses <img> instead
-let SvgXml: any = null;
-if (Platform.OS !== 'web') {
-  SvgXml = require('react-native-svg').SvgXml;
-}
 
 interface MandalaArtProps {
   size?: number;
-  xml?: string | null;
   animated?: boolean;
 }
 
-let globalCachedXml: string | null = null;
-let globalCachedUri: string | null = null;
+/**
+ * The mandala is a pre-rasterized PNG rather than the source SVG.
+ *
+ * mandala_gold.svg has 1234 <path> elements, and SvgXml turns every one of them
+ * into a native view. A screen that draws four mandalas (a background plus three
+ * cards) was building ~18k views and dropping frames at a 38ms median. The PNG
+ * is a single view, so it costs the same no matter how many are on screen.
+ *
+ * assets/vectors/mandala_gold.svg is kept as the master artwork — re-export it at
+ * 2048x2048 if the art ever changes.
+ */
+const MANDALA_SOURCE = require('../assets/vectors/mandala_gold.png');
 
-export default function MandalaArt({ size = 300, xml, animated = true }: MandalaArtProps) {
-  const [xmlContent, setXmlContent] = useState<string | null>(xml || globalCachedXml);
-  const [webUri, setWebUri] = useState<string | null>(globalCachedUri);
+export default function MandalaArt({ size = 300, animated = true }: MandalaArtProps) {
   const rotation = useSharedValue(0);
 
-  useEffect(() => {
-    if (xml) {
-      setXmlContent(xml);
-      globalCachedXml = xml;
-    }
-  }, [xml]);
-
-  useEffect(() => {
+  React.useEffect(() => {
     if (!animated) {
       rotation.value = 0;
       return;
@@ -59,53 +51,14 @@ export default function MandalaArt({ size = 300, xml, animated = true }: Mandala
     transform: [{ rotate: `${rotation.value}deg` }],
   }));
 
-  useEffect(() => {
-    const alreadyLoaded =
-      Platform.OS === 'web' ? !!webUri : !!xmlContent;
-    if (alreadyLoaded) return;
-
-    async function loadSvg() {
-      try {
-        const asset = Asset.fromModule(require('../assets/vectors/mandala_gold.svg'));
-        await asset.downloadAsync();
-
-        if (Platform.OS === 'web') {
-          // On web: just store the URI so we can use a plain <img>
-          const uri = asset.uri;
-          globalCachedUri = uri;
-          setWebUri(uri);
-        } else if (asset.localUri) {
-          const content = await FileSystem.readAsStringAsync(asset.localUri);
-          globalCachedXml = content;
-          setXmlContent(content);
-        }
-      } catch (error) {
-        console.warn('Error loading mandala SVG:', error);
-      }
-    }
-    loadSvg();
-  }, [xmlContent, webUri]);
-
   return (
     <View style={[styles.container, { width: size, height: size }]}>
       <Animated.View style={[styles.svgWrapper, animatedStyle]}>
-        {Platform.OS === 'web' ? (
-          webUri ? (
-            <Image
-              source={{ uri: webUri }}
-              style={{ width: size, height: size }}
-              resizeMode="contain"
-            />
-          ) : (
-            <View style={{ width: size, height: size }} />
-          )
-        ) : (
-          SvgXml && xmlContent ? (
-            <SvgXml xml={xmlContent} width={size} height={size} />
-          ) : (
-            <View style={{ width: size, height: size }} />
-          )
-        )}
+        <Image
+          source={MANDALA_SOURCE}
+          style={{ width: size, height: size }}
+          resizeMode="contain"
+        />
       </Animated.View>
     </View>
   );

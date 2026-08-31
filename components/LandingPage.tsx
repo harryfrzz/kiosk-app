@@ -28,7 +28,7 @@ export default function LandingPage({ onReset, onSpotCoupons, onFacultyCoupons, 
   return (
     <View style={styles.container}>
       <View style={[styles.mandalaContainer, { left: width / 2 - 400, top: height / 2 - 400 }]}>
-        <MandalaArt size={800} xml={null} />
+        <MandalaArt size={800} />
       </View>
 
       <ScrollView

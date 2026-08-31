@@ -19,12 +19,15 @@ import Animated, {
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MandalaArt from './MandalaArt';
-import { FacultyUser, MealDefinition } from '../mockData';
+import { PassHolder, MealDefinition } from '../mockData';
 
 interface PrintCouponPageProps {
-  user: FacultyUser;
+  /** Cardholder for a faculty pass; null for an anonymous walk-in spot coupon. */
+  holder: PassHolder | null;
   meal: MealDefinition;
+  /** Total amount paid, already multiplied by quantity. */
   price: number;
+  quantity?: number;
   onFinish: () => void;
 }
 
@@ -39,9 +42,10 @@ const TICKET_W = 420;
 const TICKET_H = 340;
 
 export default function PrintCouponPage({
-  user,
+  holder,
   meal,
   price,
+  quantity = 1,
   onFinish,
 }: PrintCouponPageProps) {
   const { width, height } = useWindowDimensions();
@@ -135,18 +139,22 @@ export default function PrintCouponPage({
 
   const formatPrice = (amt: number) => amt === 0 ? 'FREE' : `₹${amt.toFixed(2)}`;
 
+  const passNoun = holder ? 'pass' : quantity === 1 ? 'coupon' : 'coupons';
+
   return (
     <View style={styles.container}>
       {/* Faint static bg mandala */}
       <View style={[styles.bgMandala, { left: width / 2 - 400, top: height / 2 - 400 }]}>
-        <MandalaArt size={800} xml={null} />
+        <MandalaArt size={800} />
       </View>
 
-      <View style={[styles.content, { paddingTop: Math.max(24, insets.top + 12) }]}>
+      <View style={[styles.content, { paddingTop: 12 }]}>
         {/* Status */}
         <Text style={styles.statusTitle}>{statusText}</Text>
         <Text style={styles.statusSub}>
-          {isPrinted ? 'Collect your pass from the dispenser' : 'Mandala dispensing your thermal pass…'}
+          {isPrinted
+            ? `Collect your ${passNoun} from the dispenser`
+            : `Mandala dispensing your thermal ${passNoun}…`}
         </Text>
 
         {/* ── Mandala Split + Printer Stage ─────────────────────────────────── */}
@@ -177,21 +185,27 @@ export default function PrintCouponPage({
               {/* Black & White thermal receipt */}
               <View style={styles.ticket}>
                 <View style={styles.tktHeader}>
-                  <Text style={styles.tktBrand}>ANNAKSHETRA MEAL PASS</Text>
+                  <Text style={styles.tktBrand}>
+                    {holder ? 'ANNAKSHETRA MEAL PASS' : 'ANNAKSHETRA SPOT COUPON'}
+                  </Text>
                 </View>
 
                 <View style={styles.tktHr} />
 
                 <View style={styles.tktBody}>
                   <View style={styles.tktRow}>
-                    <Text style={styles.lbl}>FACULTY NAME</Text>
-                    <Text style={styles.valLg}>{user.name}</Text>
+                    <Text style={styles.lbl}>{holder ? 'FACULTY NAME' : 'ISSUED TO'}</Text>
+                    <Text style={styles.valLg}>{holder ? holder.name : 'Walk-in Guest'}</Text>
                   </View>
 
                   <View style={styles.tktInlineRow}>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.lbl}>DEPARTMENT</Text>
-                      <Text style={styles.valSm}>{user.department}</Text>
+                      <Text style={styles.lbl}>{holder ? 'DEPARTMENT' : 'QUANTITY'}</Text>
+                      <Text style={styles.valSm}>
+                        {holder
+                          ? holder.department
+                          : `${quantity} ${quantity === 1 ? 'coupon' : 'coupons'}`}
+                      </Text>
                     </View>
                     <View style={{ flex: 1, alignItems: 'flex-end' }}>
                       <Text style={styles.lbl}>MEAL TYPE</Text>

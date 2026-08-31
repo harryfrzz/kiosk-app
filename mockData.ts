@@ -14,6 +14,15 @@ export interface FacultyUser {
   purchasedMealsToday: string[];
 }
 
+/**
+ * Whose pass this is. Faculty passes carry the cardholder; spot coupons are
+ * anonymous walk-ins and pass `null`.
+ */
+export interface PassHolder {
+  name: string;
+  department: string;
+}
+
 export interface MealDefinition {
   id: string;
   label: string;
@@ -48,6 +57,31 @@ export function isMealAvailable(meal: MealDefinition, now: Date = new Date()): b
   const start = meal.startHour * 60 + meal.startMinute;
   const end = meal.endHour * 60 + meal.endMinute;
   return totalMinutes >= start && totalMinutes < end;
+}
+
+/** Quantity bounds for a single spot-coupon purchase */
+export const SPOT_MIN_QUANTITY = 1;
+export const SPOT_MAX_QUANTITY = 10;
+
+/** Spot coupons are walk-in purchases — no card, no subsidy, always full price. */
+export function spotCouponTotal(meal: MealDefinition, quantity: number): number {
+  return meal.basePrice * quantity;
+}
+
+/** Formats an amount as INR, or "Free" when nothing is owed. */
+export function formatINR(amount: number): string {
+  return amount === 0 ? 'Free' : `₹${amount.toFixed(2)}`;
+}
+
+/** Renders a meal's serving window as e.g. "7 AM - 9 AM" */
+export function formatMealWindow(meal: MealDefinition): string {
+  const label = (h: number, m: number) => {
+    const suffix = h >= 12 && h < 24 ? 'PM' : 'AM';
+    const displayH = h > 12 ? h - 12 : h === 0 || h === 24 ? 12 : h;
+    const displayM = m === 0 ? '' : `:${String(m).padStart(2, '0')}`;
+    return `${displayH}${displayM} ${suffix}`;
+  };
+  return `${label(meal.startHour, meal.startMinute)} - ${label(meal.endHour, meal.endMinute)}`;
 }
 
 /** Mock faculty user — swap with API response */

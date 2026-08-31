@@ -192,30 +192,13 @@ export default function FacultyMealsPage({ user, onBack, onReset, onProceedToPay
     <View style={styles.container}>
       {/* Background mandala */}
       <View style={[styles.mandalaContainer, { left: width / 2 - 400, top: height / 2 - 400 }]}>
-        <MandalaArt size={800} xml={null} />
+        <MandalaArt size={800} />
       </View>
 
       {/* Header */}
-      <View style={[styles.header, { paddingTop: Math.max(12, insets.top) }]}>
-        <Pressable
-          onPress={onBack}
-          style={({ pressed }) => [styles.headerBtn, pressed && styles.headerBtnPressed]}
-          hitSlop={12}
-        >
-          <Ionicons name="chevron-back" size={22} color="#8A6D1B" />
-          <Text style={styles.headerBtnText}>Back</Text>
-        </Pressable>
-
+      {/* Title only — the controls live in the bottom bar, within thumb reach. */}
+      <View style={styles.header}>
         <Text style={styles.headerTitle}>Faculty & Staff Coupon</Text>
-
-        <Pressable
-          onPress={onReset}
-          style={({ pressed }) => [styles.headerBtn, pressed && styles.headerBtnPressed]}
-          hitSlop={12}
-        >
-          <Ionicons name="refresh" size={18} color="#8A6D1B" />
-          <Text style={styles.headerBtnText}>Start Over</Text>
-        </Pressable>
       </View>
 
       <ScrollView
@@ -319,12 +302,34 @@ export default function FacultyMealsPage({ user, onBack, onReset, onProceedToPay
       </View>
 
       {/* Pinned Bottom Footer Logo */}
-      <View style={[styles.pinnedFooter, { paddingBottom: Math.max(10, insets.bottom), pointerEvents: 'none' }]}>
+      {/* Pinned bottom control bar — Back and Start Over flanking the logo */}
+      <View style={[styles.pinnedFooter, { paddingBottom: Math.max(10, insets.bottom) }]}>
+        <Pressable
+          onPress={onBack}
+          style={({ pressed }) => [styles.controlBtn, pressed && styles.controlBtnPressed]}
+          hitSlop={12}
+        >
+          <Ionicons name="chevron-back" size={22} color="#8A6D1B" />
+          <Text style={styles.controlBtnText}>Back</Text>
+        </Pressable>
+
         <Image
           source={require('../assets/branding/annakshetra.png')}
-          style={styles.footerLogo}
+          style={[
+            styles.footerLogo,
+            { width: width > 768 ? 200 : 130, height: width > 768 ? 62 : 40 },
+          ]}
           resizeMode="contain"
         />
+
+        <Pressable
+          onPress={onReset}
+          style={({ pressed }) => [styles.controlBtn, pressed && styles.controlBtnPressed]}
+          hitSlop={12}
+        >
+          <Ionicons name="refresh" size={18} color="#8A6D1B" />
+          <Text style={styles.controlBtnText}>Start Over</Text>
+        </Pressable>
       </View>
     </View>
   );
@@ -341,9 +346,7 @@ const styles = StyleSheet.create({
     opacity: 0.1,
   },
   header: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingBottom: 12,
     borderBottomWidth: 1,
@@ -351,19 +354,26 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(250, 246, 238, 0.92)',
     zIndex: 10,
   },
-  headerBtn: {
+  controlBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-    gap: 4,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderRadius: 22,
+    backgroundColor: 'rgba(212, 175, 55, 0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.32)',
   },
-  headerBtnPressed: { opacity: 0.6 },
-  headerBtnText: {
+  controlBtnPressed: {
+    opacity: 0.7,
+    backgroundColor: 'rgba(212, 175, 55, 0.26)',
+  },
+  controlBtnText: {
     fontFamily: 'Outfit_600SemiBold',
     color: '#8A6D1B',
-    fontSize: 15,
     fontWeight: '700',
+    fontSize: 15,
+    marginLeft: 3,
   },
   headerTitle: {
     fontFamily: 'BricolageGrotesque_700Bold',
@@ -799,15 +809,17 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     paddingTop: 10,
+    paddingHorizontal: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(212, 175, 55, 0.25)',
     backgroundColor: 'rgba(250, 246, 238, 0.85)',
     zIndex: 20,
   },
   footerLogo: {
-    width: 200,
-    height: 62,
     opacity: 0.85,
   },
 });
