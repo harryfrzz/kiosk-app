@@ -84,13 +84,13 @@ export default function SplashScreen({ onAnimationComplete }: SplashScreenProps)
       ExpoSplashScreen.hideAsync();
 
       // Entrance animation for logo
-      logoScale.value = withTiming(1, { duration: 800, easing: Easing.out(Easing.exp) });
-      logoOpacity.value = withTiming(1, { duration: 800 });
+      logoScale.value = withTiming(1, { duration: 500, easing: Easing.out(Easing.exp) });
+      logoOpacity.value = withTiming(1, { duration: 500 });
 
       // Run shimmer glint after logo appears
       shimmerTranslateX.value = withDelay(
-        800,
-        withTiming(LOGO_WIDTH * 1.5, { duration: 1000, easing: Easing.linear })
+        500,
+        withTiming(LOGO_WIDTH * 1.5, { duration: 900, easing: Easing.linear })
       );
 
       // Expanding golden touch ripple animation loop
@@ -140,11 +140,11 @@ export default function SplashScreen({ onAnimationComplete }: SplashScreenProps)
           <MandalaArt size={width * 1.8} />
         </View>
 
-        <Animated.View style={[styles.stripContainer, animatedLogoStyle]}>
+        <View style={styles.stripContainer}>
           <BlurView intensity={60} tint="light" style={styles.fullWidthStrip}>
             <View style={styles.stripWarmOverlay} />
             
-            <View style={[styles.logoMask, { width: LOGO_WIDTH, height: LOGO_HEIGHT }]}>
+            <Animated.View style={[styles.logoMask, { width: LOGO_WIDTH, height: LOGO_HEIGHT }, animatedLogoStyle]}>
               <Image 
                 source={require('../assets/branding/annakshetra.png')} 
                 style={styles.logo}
@@ -152,9 +152,9 @@ export default function SplashScreen({ onAnimationComplete }: SplashScreenProps)
               />
               {/* Shimmer Effect */}
               <Animated.View style={[styles.shimmer, animatedShimmerStyle, { top: -LOGO_HEIGHT, bottom: -LOGO_HEIGHT }]} />
-            </View>
+            </Animated.View>
           </BlurView>
-        </Animated.View>
+        </View>
 
         {/* Bottom Tap to Continue Prompt */}
         <View style={styles.bottomPromptContainer}>

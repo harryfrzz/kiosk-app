@@ -35,7 +35,7 @@ export interface MealDefinition {
 }
 
 export const MEALS: MealDefinition[] = [
-  { id: 'breakfast', label: 'Breakfast', startHour: 7, startMinute: 0, endHour: 9, endMinute: 0, basePrice: 40 },
+  { id: 'breakfast', label: 'Breakfast', startHour: 7, startMinute: 0, endHour: 24, endMinute: 0, basePrice: 40 },
   { id: 'lunch', label: 'Lunch', startHour: 11, startMinute: 0, endHour: 14, endMinute: 0, basePrice: 80 },
   { id: 'tea', label: 'Tea', startHour: 15, startMinute: 0, endHour: 17, endMinute: 0, basePrice: 20 },
   { id: 'dinner', label: 'Dinner', startHour: 18, startMinute: 0, endHour: 24, endMinute: 0, basePrice: 80 },
